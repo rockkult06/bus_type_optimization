@@ -9,7 +9,7 @@ import InsufficientResourcesWarning from "@/components/insufficient-resources-wa
 import { ArrowRight, ArrowLeft } from "lucide-react"
 
 export default function BusOptimizationTab() {
-  const { routes, parameters, setResults, setKpis, isOptimizing, setIsOptimizing, setActiveStep } = useBusOptimization()
+  const { routes, busParameters, setOptimizationResults, setKpis, isOptimizing, setIsOptimizing, setActiveStep } = useBusOptimization()
 
   const [showInsufficientWarning, setShowInsufficientWarning] = useState(false)
   const [startButtonHover, setStartButtonHover] = useState(false)
@@ -25,10 +25,10 @@ export default function BusOptimizationTab() {
     // Simulate optimization delay
     setTimeout(() => {
       const startTime = performance.now()
-      const { results, kpis, isFeasible } = runOptimization(routes, parameters)
+      const { results, kpis, isFeasible } = runOptimization(routes, busParameters)
       const endTime = performance.now()
 
-      setResults(results)
+      setOptimizationResults(results)
       setKpis({
         ...kpis,
         optimizationTime: (endTime - startTime) / 1000,

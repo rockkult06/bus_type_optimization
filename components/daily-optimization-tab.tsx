@@ -23,7 +23,7 @@ export function DailyOptimizationTab() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {optimizationResults.reduce((sum, route) => sum + route.totalDailyCost, 0).toFixed(2)} TL
+              {optimizationResults.reduce((sum, route) => sum + route.totalCost, 0).toFixed(2)} TL
             </div>
           </CardContent>
         </Card>
@@ -33,7 +33,7 @@ export function DailyOptimizationTab() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {optimizationResults.reduce((sum, route) => sum + route.totalDailyCO2, 0).toFixed(2)} kg
+              {optimizationResults.reduce((sum, route) => sum + route.carbonEmission, 0).toFixed(2)} kg
             </div>
           </CardContent>
         </Card>
@@ -43,7 +43,7 @@ export function DailyOptimizationTab() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(optimizationResults.reduce((sum, route) => sum + route.averageCapacityUtilization, 0) / optimizationResults.length).toFixed(1)}%
+              {(optimizationResults.reduce((sum, route) => sum + route.capacityUtilization, 0) / optimizationResults.length).toFixed(1)}%
             </div>
           </CardContent>
         </Card>
@@ -70,9 +70,9 @@ export function DailyOptimizationTab() {
                 <TableRow key={route.routeNo}>
                   <TableCell>{route.routeNo}</TableCell>
                   <TableCell>{route.routeName}</TableCell>
-                  <TableCell>{route.totalDailyCost.toFixed(2)} TL</TableCell>
-                  <TableCell>{route.totalDailyCO2.toFixed(2)} kg</TableCell>
-                  <TableCell>{route.averageCapacityUtilization.toFixed(1)}%</TableCell>
+                  <TableCell>{route.totalCost.toFixed(2)} TL</TableCell>
+                  <TableCell>{route.carbonEmission.toFixed(2)} kg</TableCell>
+                  <TableCell>{route.capacityUtilization.toFixed(1)}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -92,28 +92,27 @@ export function DailyOptimizationTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Saat</TableHead>
-                  <TableHead>Otobüs Tipi</TableHead>
-                  <TableHead>Otobüs Sayısı</TableHead>
-                  <TableHead>Maliyet</TableHead>
+                  <TableHead>Hat Uzunluğu (A-B)</TableHead>
+                  <TableHead>Hat Uzunluğu (B-A)</TableHead>
+                  <TableHead>Küçük Otobüs</TableHead>
+                  <TableHead>Orta Otobüs</TableHead>
+                  <TableHead>Büyük Otobüs</TableHead>
+                  <TableHead>Toplam Maliyet</TableHead>
                   <TableHead>CO2 Emisyonu</TableHead>
                   <TableHead>Kapasite Kullanımı</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {route.hourlyOptimizations.map((hour) => (
-                  <TableRow key={hour.hour}>
-                    <TableCell>{hour.hour}:00</TableCell>
-                    <TableCell>
-                      {hour.selectedBusType === "small" ? "Küçük" :
-                       hour.selectedBusType === "medium" ? "Orta" : "Büyük"}
-                    </TableCell>
-                    <TableCell>{hour.requiredBuses}</TableCell>
-                    <TableCell>{hour.totalCost.toFixed(2)} TL</TableCell>
-                    <TableCell>{hour.co2Emission.toFixed(2)} kg</TableCell>
-                    <TableCell>{hour.capacityUtilization.toFixed(1)}%</TableCell>
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableCell>{route.routeLengthAtoB.toFixed(1)} km</TableCell>
+                  <TableCell>{route.routeLengthBtoA.toFixed(1)} km</TableCell>
+                  <TableCell>{route.minibus}</TableCell>
+                  <TableCell>{route.solo}</TableCell>
+                  <TableCell>{route.articulated}</TableCell>
+                  <TableCell>{route.totalCost.toFixed(2)} TL</TableCell>
+                  <TableCell>{route.carbonEmission.toFixed(2)} kg</TableCell>
+                  <TableCell>{route.capacityUtilization.toFixed(1)}%</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </CardContent>

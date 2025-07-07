@@ -1,6 +1,6 @@
 "use client"
 
-import type * as React from "react"
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import * as Tooltip from "@radix-ui/react-tooltip"
 
 interface RouteData {
   routeNo: string
@@ -63,9 +63,9 @@ const TimelineBlock: React.FC<TimelineBlockProps> = ({
     : "polygon(3% 0%, 100% 0%, 100% 100%, 3% 100%, 0% 50%)"
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
           <div
             className="absolute h-10 shadow-md flex items-center justify-center text-white text-xs font-medium overflow-hidden whitespace-nowrap transition-all duration-200 hover:shadow-lg"
             style={{
@@ -105,8 +105,8 @@ const TimelineBlock: React.FC<TimelineBlockProps> = ({
 
             <span className="px-3 font-medium truncate text-sm">{routeNo}</span>
           </div>
-        </TooltipTrigger>
-        <TooltipContent
+        </Tooltip.Trigger>
+        <Tooltip.Content
           side="top"
           className="bg-white text-gray-800 border border-gray-200 shadow-md rounded-lg p-3 z-50 max-w-[250px]"
         >
@@ -125,9 +125,10 @@ const TimelineBlock: React.FC<TimelineBlockProps> = ({
               Otobüs: {busId}
             </p>
           </div>
-        </TooltipContent>
-      </TooltipProvider>
-    )
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  )
 }
 
 // Calculate estimated end time based on duration
@@ -426,250 +427,252 @@ const BusScheduleTimeline: React.FC<BusScheduleTimelineProps> = ({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Filter Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowFilters(!showFilters)}>
-            <Filter className="h-3 w-3 mr-1" />
-            {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
-          </Button>
+    <Tooltip.Provider>
+      <div className="space-y-4">
+        {/* Filter Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowFilters(!showFilters)}>
+              <Filter className="h-3 w-3 mr-1" />
+              {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleZoomChange(Math.max(0.5, zoomLevel - 0.5))}
+                disabled={zoomLevel <= 0.5}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Slider
+                value={[zoomLevel]}
+                min={0.5}
+                max={4}
+                step={0.5}
+                className="w-24"
+                onValueChange={(value) => handleZoomChange(value[0])}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleZoomChange(Math.min(4, zoomLevel + 0.5))}
+                disabled={zoomLevel >= 4}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleZoomChange(Math.max(0.5, zoomLevel - 0.5))}
-              disabled={zoomLevel <= 0.5}
-            >
-              <ZoomOut className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="text-xs" onClick={resetFilters}>
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Sıfırla
             </Button>
-            <Slider
-              value={[zoomLevel]}
-              min={0.5}
-              max={4}
-              step={0.5}
-              className="w-24"
-              onValueChange={(value) => handleZoomChange(value[0])}
-            />
+
             <Button
               variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleZoomChange(Math.min(4, zoomLevel + 0.5))}
-              disabled={zoomLevel >= 4}
+              size="sm"
+              className="text-xs"
+              onClick={() => {
+                const container = document.getElementById("schedule-timeline-container")
+                if (container) {
+                  container.scrollLeft = 0
+                }
+              }}
             >
-              <ZoomIn className="h-4 w-4" />
+              <ArrowLeft className="h-3 w-3 mr-1" />
+              Başa Dön
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs" onClick={resetFilters}>
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Sıfırla
-          </Button>
+        {/* Expanded Filters Panel */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg mb-4 animate-fadeIn">
+            <div>
+              <Label htmlFor="route-filter" className="text-xs font-medium mb-1.5 block">
+                Hat Numarası
+              </Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {filterRoute || "Tüm Hatlar"}
+                    <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48">
+                  <DropdownMenuItem onClick={() => setFilterRoute("")}>Tüm Hatlar</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {uniqueRouteNumbers.map((routeNo) => (
+                    <DropdownMenuItem key={routeNo} onClick={() => setFilterRoute(routeNo)}>
+                      Hat {routeNo}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={() => {
-              const container = document.getElementById("schedule-timeline-container")
-              if (container) {
-                container.scrollLeft = 0
-              }
+            <div>
+              <Label htmlFor="bus-filter" className="text-xs font-medium mb-1.5 block">
+                Otobüs ID
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  id="bus-filter"
+                  value={filterBusId}
+                  onChange={(e) => setFilterBusId(e.target.value)}
+                  placeholder="Otobüs ara..."
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="direction-filter" className="text-xs font-medium mb-1.5 block">
+                Yön
+              </Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {filterDirection === "all"
+                      ? "Tüm Yönler"
+                      : filterDirection === "ab"
+                        ? "A → B (Gidiş)"
+                        : "B → A (Dönüş)"}
+                    <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setFilterDirection("all")}>Tüm Yönler</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterDirection("ab")}>A → B (Gidiş)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterDirection("ba")}>B → A (Dönüş)</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div>
+              <Label className="text-xs font-medium mb-1.5 block">Zaman Aralığı</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="time"
+                  value={filterTimeRange.start}
+                  onChange={(e) => setFilterTimeRange({ ...filterTimeRange, start: e.target.value })}
+                  className="w-full"
+                />
+                <span className="text-gray-500">-</span>
+                <Input
+                  type="time"
+                  value={filterTimeRange.end}
+                  onChange={(e) => setFilterTimeRange({ ...filterTimeRange, end: e.target.value })}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Timeline */}
+        {/* Update the timeline container styling for a more modern look */}
+        <div id="schedule-timeline-container" className="w-full overflow-x-auto">
+          <div
+            className="min-w-[1000px] relative bg-gray-800 rounded-xl text-white overflow-hidden border border-gray-700 shadow-xl"
+            style={{
+              width: `${100 * Math.max(1, zoomLevel)}%`,
+              // Add a transform-origin to ensure zooming happens from the left
+              transformOrigin: "left center",
+              position: "relative", // Ensure proper stacking context
             }}
           >
-            <ArrowLeft className="h-3 w-3 mr-1" />
-            Başa Dön
-          </Button>
-        </div>
-      </div>
+            {/* Timeline header with time labels */}
+            <div className="flex border-b border-gray-700 sticky top-0 z-20 bg-gray-800">
+              {/* Bus ID column - z-index değerini artırıp, left:0 pozisyonunu kesin olarak belirtelim */}
+              <div className="w-20 min-w-20 flex items-center justify-center p-2 font-medium text-sm border-r border-gray-700 sticky left-0 z-50 bg-gray-800 shadow-md">
+                ID - Tip
+              </div>
 
-      {/* Expanded Filters Panel */}
-      {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg mb-4 animate-fadeIn">
-          <div>
-            <Label htmlFor="route-filter" className="text-xs font-medium mb-1.5 block">
-              Hat Numarası
-            </Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {filterRoute || "Tüm Hatlar"}
-                  <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                <DropdownMenuItem onClick={() => setFilterRoute("")}>Tüm Hatlar</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {uniqueRouteNumbers.map((routeNo) => (
-                  <DropdownMenuItem key={routeNo} onClick={() => setFilterRoute(routeNo)}>
-                    Hat {routeNo}
-                  </DropdownMenuItem>
+              {/* Time columns */}
+              <div className="flex-1 flex">
+                {timeLabels.map((label, index) => (
+                  <div
+                    key={index}
+                    className="flex-1 text-center py-2 text-xs text-gray-300 border-r border-gray-700/50 last:border-r-0"
+                  >
+                    {label}
+                  </div>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div>
-            <Label htmlFor="bus-filter" className="text-xs font-medium mb-1.5 block">
-              Otobüs ID
-            </Label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                id="bus-filter"
-                value={filterBusId}
-                onChange={(e) => setFilterBusId(e.target.value)}
-                placeholder="Otobüs ara..."
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="direction-filter" className="text-xs font-medium mb-1.5 block">
-              Yön
-            </Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {filterDirection === "all"
-                    ? "Tüm Yönler"
-                    : filterDirection === "ab"
-                      ? "A → B (Gidiş)"
-                      : "B → A (Dönüş)"}
-                  <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setFilterDirection("all")}>Tüm Yönler</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterDirection("ab")}>A → B (Gidiş)</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterDirection("ba")}>B → A (Dönüş)</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div>
-            <Label className="text-xs font-medium mb-1.5 block">Zaman Aralığı</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="time"
-                value={filterTimeRange.start}
-                onChange={(e) => setFilterTimeRange({ ...filterTimeRange, start: e.target.value })}
-                className="w-full"
-              />
-              <span className="text-gray-500">-</span>
-              <Input
-                type="time"
-                value={filterTimeRange.end}
-                onChange={(e) => setFilterTimeRange({ ...filterTimeRange, end: e.target.value })}
-                className="w-full"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Timeline */}
-      {/* Update the timeline container styling for a more modern look */}
-      <div id="schedule-timeline-container" className="w-full overflow-x-auto">
-        <div
-          className="min-w-[1000px] relative bg-gray-800 rounded-xl text-white overflow-hidden border border-gray-700 shadow-xl"
-          style={{
-            width: `${100 * Math.max(1, zoomLevel)}%`,
-            // Add a transform-origin to ensure zooming happens from the left
-            transformOrigin: "left center",
-            position: "relative", // Ensure proper stacking context
-          }}
-        >
-          {/* Timeline header with time labels */}
-          <div className="flex border-b border-gray-700 sticky top-0 z-20 bg-gray-800">
-            {/* Bus ID column - z-index değerini artırıp, left:0 pozisyonunu kesin olarak belirtelim */}
-            <div className="w-20 min-w-20 flex items-center justify-center p-2 font-medium text-sm border-r border-gray-700 sticky left-0 z-50 bg-gray-800 shadow-md">
-              ID - Tip
+              </div>
             </div>
 
-            {/* Time columns */}
-            <div className="flex-1 flex">
-              {timeLabels.map((label, index) => (
+            {/* Bus rows */}
+            <div className="relative max-h-[560px] overflow-y-auto">
+              {/* Vertical time grid lines - improved styling with better visibility */}
+              <div className="absolute inset-0 flex pointer-events-none">
+                {timeLabels.map((_, index) => (
+                  <div key={index} className="flex-1 border-r border-gray-600/40 last:border-r-0 h-full" />
+                ))}
+              </div>
+
+              {/* Bus rows with timeline blocks */}
+              {busIds.map((busItem, rowIndex) => (
                 <div
-                  key={index}
-                  className="flex-1 text-center py-2 text-xs text-gray-300 border-r border-gray-700/50 last:border-r-0"
+                  key={busItem.id}
+                  className={`flex h-14 relative hover:bg-gray-700/30 transition-colors ${
+                    rowIndex < busIds.length - 1 ? "border-b border-gray-700/50" : ""
+                  }`}
                 >
-                  {label}
-                </div>
-              ))}
-            </div>
-          </div>
+                  {/* Bus ID with Type - z-index değerini artırıp, left:0 pozisyonunu kesin olarak belirtelim */}
+                  <div className="w-20 min-w-20 flex items-center justify-center p-2 font-medium text-sm border-r border-gray-700 sticky left-0 z-40 bg-gray-800 shadow-md">
+                    <div className="px-2 py-1.5 rounded-full bg-gray-700/70 flex items-center border border-gray-600">
+                      <span>{busItem.id.split("-")[1]}</span>
+                      <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-gray-600/70 border border-gray-500">{busItem.typeLabel}</span>
+                    </div>
+                  </div>
 
-          {/* Bus rows */}
-          <div className="relative max-h-[560px] overflow-y-auto">
-            {/* Vertical time grid lines - improved styling with better visibility */}
-            <div className="absolute inset-0 flex pointer-events-none">
-              {timeLabels.map((_, index) => (
-                <div key={index} className="flex-1 border-r border-gray-600/40 last:border-r-0 h-full" />
-              ))}
-            </div>
+                  {/* Timeline area */}
+                  <div className="flex-1 relative">
+                    {/* Render timeline blocks for this bus */}
+                    {processedData[busItem.id]?.map((trip, index) => {
+                      const { startPosition, width } = calculateBlockPosition(trip.startTime, trip.duration)
 
-            {/* Bus rows with timeline blocks */}
-            {busIds.map((busItem, rowIndex) => (
-              <div
-                key={busItem.id}
-                className={`flex h-14 relative hover:bg-gray-700/30 transition-colors ${
-                  rowIndex < busIds.length - 1 ? "border-b border-gray-700/50" : ""
-                }`}
-              >
-                {/* Bus ID with Type - z-index değerini artırıp, left:0 pozisyonunu kesin olarak belirtelim */}
-                <div className="w-20 min-w-20 flex items-center justify-center p-2 font-medium text-sm border-r border-gray-700 sticky left-0 z-40 bg-gray-800 shadow-md">
-                  <div className="px-2 py-1.5 rounded-full bg-gray-700/70 flex items-center border border-gray-600">
-                    <span>{busItem.id.split("-")[1]}</span>
-                    <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-gray-600/70 border border-gray-500">{busItem.typeLabel}</span>
+                      // Ensure minimum width for visibility but keep proportional to duration
+                      const displayWidth = Math.max(width, 3)
+
+                      return (
+                        <TimelineBlock
+                          key={`${busItem.id}-${index}`}
+                          routeNo={trip.routeNo}
+                          startTime={trip.startTime}
+                          endTime={trip.endTime}
+                          direction={trip.direction}
+                          duration={trip.duration}
+                          color={routeColors[trip.routeNo] || "#374151"}
+                          routeName={trip.routeName}
+                          routeLength={trip.routeLength}
+                          style={{
+                            left: `${startPosition}%`,
+                            width: `${displayWidth}%`,
+                            top: "8px",
+                          }}
+                          busId={trip.busId}
+                        />
+                      )
+                    })}
                   </div>
                 </div>
-
-                {/* Timeline area */}
-                <div className="flex-1 relative">
-                  {/* Render timeline blocks for this bus */}
-                  {processedData[busItem.id]?.map((trip, index) => {
-                    const { startPosition, width } = calculateBlockPosition(trip.startTime, trip.duration)
-
-                    // Ensure minimum width for visibility but keep proportional to duration
-                    const displayWidth = Math.max(width, 3)
-
-                    return (
-                      <TimelineBlock
-                        key={`${busItem.id}-${index}`}
-                        routeNo={trip.routeNo}
-                        startTime={trip.startTime}
-                        endTime={trip.endTime}
-                        direction={trip.direction}
-                        duration={trip.duration}
-                        color={routeColors[trip.routeNo] || "#374151"}
-                        routeName={trip.routeName}
-                        routeLength={trip.routeLength}
-                        style={{
-                          left: `${startPosition}%`,
-                          width: `${displayWidth}%`,
-                          top: "8px",
-                        }}
-                        busId={trip.busId}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Route legend */}
-      <RouteLegend routeColors={routeColors} routes={routes} />
-    </div>
+        {/* Route legend */}
+        <RouteLegend routeColors={routeColors} routes={routes} />
+      </div>
+    </Tooltip.Provider>
   )
 }
 

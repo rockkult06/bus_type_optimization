@@ -1,17 +1,17 @@
 "use client"
 
 import React, { createContext, useContext, useState, type ReactNode } from "react"
-import { 
-  RouteData, 
-  BusParameters, 
-  OptimizationResult, 
+import type {
+  RouteData,
+  BusParameters,
+  OptimizationResult,
   ScheduleParameters,
   ScheduleResult,
   KPIData,
   DailyRouteData,
   HourlyDemand,
   DailyOptimizationResult
-} from '../types';
+} from '../types'
 
 // RouteData tipini güncelle - her iki yön için ayrı uzunluk ve parkur süresi ekle
 export type RouteData = {
@@ -27,32 +27,16 @@ export type RouteData = {
 
 // BusParameters tipine maxInterlining ekleyelim
 export type BusParameters = {
-  minibus: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number // Number of available minibuses in the fleet
-    maintenanceCost: number // Maintenance cost per kilometer
-    depreciationCost: number // Depreciation cost per kilometer
-    carbonEmission: number // Carbon emission per kilometer (kg/km)
-  }
-  solo: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number // Number of available solo buses in the fleet
-    maintenanceCost: number // Maintenance cost per kilometer
-    depreciationCost: number // Depreciation cost per kilometer
-    carbonEmission: number // Carbon emission per kilometer (kg/km)
-  }
-  articulated: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number // Number of available articulated buses in the fleet
-    maintenanceCost: number // Maintenance cost per kilometer
-    depreciationCost: number // Depreciation cost per kilometer
-    carbonEmission: number // Carbon emission per kilometer (kg/km)
-  }
-  driverCost: number
-  maxInterlining: number // Maximum number of routes a bus can serve
+  smallBusCapacity: number
+  smallBusOperatingCost: number
+  smallBusCO2Emission: number
+  mediumBusCapacity: number
+  mediumBusOperatingCost: number
+  mediumBusCO2Emission: number
+  largeBusCapacity: number
+  largeBusOperatingCost: number
+  largeBusCO2Emission: number
+  operationalHours: number
 }
 
 // Schedule optimization types
@@ -159,34 +143,17 @@ interface BusOptimizationContextType {
   setActiveStep: (step: string) => void
 }
 
-// Varsayılan parametrelere maxInterlining ekleyelim
 const defaultParameters: BusParameters = {
-  minibus: {
-    capacity: 25,
-    fuelCost: 0.8,
-    fleetCount: 10,
-    maintenanceCost: 0.3,
-    depreciationCost: 0.5,
-    carbonEmission: 0.7,
-  },
-  solo: {
-    capacity: 90,
-    fuelCost: 1.0,
-    fleetCount: 20,
-    maintenanceCost: 0.4,
-    depreciationCost: 0.6,
-    carbonEmission: 1.0,
-  },
-  articulated: {
-    capacity: 150,
-    fuelCost: 1.3,
-    fleetCount: 15,
-    maintenanceCost: 0.5,
-    depreciationCost: 0.8,
-    carbonEmission: 1.4,
-  },
-  driverCost: 50,
-  maxInterlining: 2,
+  smallBusCapacity: 25,
+  smallBusOperatingCost: 0.8,
+  smallBusCO2Emission: 0.7,
+  mediumBusCapacity: 90,
+  mediumBusOperatingCost: 1.0,
+  mediumBusCO2Emission: 1.0,
+  largeBusCapacity: 150,
+  largeBusOperatingCost: 1.3,
+  largeBusCO2Emission: 1.4,
+  operationalHours: 18,
 }
 
 const defaultScheduleParameters: ScheduleParameters = {
@@ -198,6 +165,14 @@ const defaultScheduleParameters: ScheduleParameters = {
 
 const BusOptimizationContext = createContext<BusOptimizationContextType | undefined>(undefined)
 
+export function useBusOptimization() {
+  const context = useContext(BusOptimizationContext)
+  if (!context) {
+    throw new Error("useBusOptimization must be used within a BusOptimizationProvider")
+  }
+  return context
+}
+
 export function BusOptimizationProvider({ children }: { children: ReactNode }) {
   const [routes, setRoutes] = useState<RouteData[]>([])
   const [dailyRoutes, setDailyRoutes] = useState<DailyRouteData[]>([])
@@ -207,7 +182,7 @@ export function BusOptimizationProvider({ children }: { children: ReactNode }) {
   const [scheduleResults, setScheduleResults] = useState<ScheduleResult | null>(null)
   const [kpis, setKpis] = useState<KPIData | null>(null)
   const [isOptimizing, setIsOptimizing] = useState(false)
-  const [activeStep, setActiveStep] = useState<string>("parameters")
+  const [activeStep, setActiveStep] = useState("busType")
 
   return (
     <BusOptimizationContext.Provider
@@ -235,12 +210,4 @@ export function BusOptimizationProvider({ children }: { children: ReactNode }) {
       {children}
     </BusOptimizationContext.Provider>
   )
-}
-
-export function useBusOptimization() {
-  const context = useContext(BusOptimizationContext)
-  if (context === undefined) {
-    throw new Error("useBusOptimization must be used within a BusOptimizationProvider")
-  }
-  return context
 }

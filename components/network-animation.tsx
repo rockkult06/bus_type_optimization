@@ -106,6 +106,7 @@ class Connection {
 export function NetworkAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -117,10 +118,10 @@ export function NetworkAnimation() {
     let animationFrameId: number
     let nodes: Node[] = []
     let connections: Connection[] = []
-    let isDark = theme === "dark"
 
     // Set canvas size
     const resizeCanvas = () => {
+      if (!canvas) return
       canvas.width = Math.min(800, window.innerWidth * 0.8)
       canvas.height = Math.min(800, window.innerWidth * 0.8)
       initNetwork()
@@ -131,6 +132,7 @@ export function NetworkAnimation() {
 
     // Initialize network
     function initNetwork() {
+      if (!canvas) return
       nodes = []
       connections = []
 
@@ -191,18 +193,20 @@ export function NetworkAnimation() {
 
     // Animation loop
     function animate() {
-      ctx!.clearRect(0, 0, canvas.width, canvas.height)
+      if (!canvas || !ctx) return
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Update and draw connections
       connections.forEach((connection) => {
         connection.update()
-        connection.draw(ctx!, isDark)
+        connection.draw(ctx, isDark)
       })
 
       // Update and draw nodes
       nodes.forEach((node) => {
         node.update()
-        node.draw(ctx!)
+        node.draw(ctx)
       })
 
       animationFrameId = requestAnimationFrame(animate)
@@ -210,28 +214,17 @@ export function NetworkAnimation() {
 
     animate()
 
-    // Update colors when theme changes
-    if (theme) {
-      isDark = theme === "dark"
-
-      nodes.forEach((node) => {
-        node.color = isDark
-          ? `rgba(${100 + Math.random() * 155}, ${150 + Math.random() * 105}, 255, 0.8)`
-          : `rgba(${50 + Math.random() * 100}, ${100 + Math.random() * 155}, 255, 0.8)`
-      })
-
-      connections.forEach((connection) => {
-        connection.color = isDark
-          ? `rgba(${100 + Math.random() * 155}, ${150 + Math.random() * 105}, 255, 0.3)`
-          : `rgba(${50 + Math.random() * 100}, ${100 + Math.random() * 155}, 255, 0.2)`
-      })
-    }
-
+    // Cleanup
     return () => {
       window.removeEventListener("resize", resizeCanvas)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [theme])
+  }, [isDark])
 
-  return <canvas ref={canvasRef} className="w-full max-w-[800px] h-auto" />
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 -z-10 w-full h-full bg-transparent pointer-events-none select-none"
+    />
+  )
 }

@@ -1,4 +1,4 @@
-import type { RouteData, BusParameters, OptimizationResult, KPIData } from "@/context/bus-optimization-context"
+import type { RouteData, BusParameters, OptimizationResult, KPIData } from "@/types"
 
 // Main optimization function
 export function runOptimization(
@@ -10,27 +10,27 @@ export function runOptimization(
   let isFeasible = true
 
   // Track total fleet usage
-  let totalMinibusUsed = 0
-  let totalSoloUsed = 0
-  let totalArticulatedUsed = 0
+  let totalSmallBusUsed = 0
+  let totalMediumBusUsed = 0
+  let totalLargeBusUsed = 0
 
   // Optimize each route
   for (const route of routes) {
     const result = optimizeRoute(route, parameters)
 
     // Update total fleet usage
-    totalMinibusUsed += result.minibus
-    totalSoloUsed += result.solo
-    totalArticulatedUsed += result.articulated
+    totalSmallBusUsed += result.minibus
+    totalMediumBusUsed += result.solo
+    totalLargeBusUsed += result.articulated
 
     results.push(result)
   }
 
   // Check if we have enough buses in the fleet
   if (
-    totalMinibusUsed > parameters.minibus.fleetCount ||
-    totalSoloUsed > parameters.solo.fleetCount ||
-    totalArticulatedUsed > parameters.articulated.fleetCount
+    totalSmallBusUsed > parameters.smallBusCapacity ||
+    totalMediumBusUsed > parameters.mediumBusCapacity ||
+    totalLargeBusUsed > parameters.largeBusCapacity
   ) {
     isFeasible = false
   }
@@ -52,41 +52,38 @@ function optimizeRoute(route: RouteData, parameters: BusParameters): Optimizatio
   const totalPassengers = peakPassengersAtoB + peakPassengersBtoA
 
   // Her yön için ayrı ayrı minimum otobüs sayılarını hesapla
-  const minMinibusesAtoB = Math.ceil(peakPassengersAtoB / parameters.minibus.capacity)
-  const minSoloBusesAtoB = Math.ceil(peakPassengersAtoB / parameters.solo.capacity)
-  const minArticulatedBusesAtoB = Math.ceil(peakPassengersAtoB / parameters.articulated.capacity)
+  const minSmallBusesAtoB = Math.ceil(peakPassengersAtoB / parameters.smallBusCapacity)
+  const minMediumBusesAtoB = Math.ceil(peakPassengersAtoB / parameters.mediumBusCapacity)
+  const minLargeBusesAtoB = Math.ceil(peakPassengersAtoB / parameters.largeBusCapacity)
 
-  const minMinibusesBtoA = Math.ceil(peakPassengersBtoA / parameters.minibus.capacity)
-  const minSoloBusesBtoA = Math.ceil(peakPassengersBtoA / parameters.solo.capacity)
-  const minArticulatedBusesBtoA = Math.ceil(peakPassengersBtoA / parameters.articulated.capacity)
+  const minSmallBusesBtoA = Math.ceil(peakPassengersBtoA / parameters.smallBusCapacity)
+  const minMediumBusesBtoA = Math.ceil(peakPassengersBtoA / parameters.mediumBusCapacity)
+  const minLargeBusesBtoA = Math.ceil(peakPassengersBtoA / parameters.largeBusCapacity)
 
   // Her iki yön için toplam minimum otobüs sayılarını hesapla
-  const minMinibuses = Math.max(minMinibusesAtoB, minMinibusesBtoA)
-  const minSoloBuses = Math.max(minSoloBusesAtoB, minSoloBusesBtoA)
-  const minArticulatedBuses = Math.max(minArticulatedBusesAtoB, minArticulatedBusesBtoA)
+  const minSmallBuses = Math.max(minSmallBusesAtoB, minSmallBusesBtoA)
+  const minMediumBuses = Math.max(minMediumBusesAtoB, minMediumBusesBtoA)
+  const minLargeBuses = Math.max(minLargeBusesAtoB, minLargeBusesBtoA)
 
   // Calculate costs for different bus types
-  const minibusOperatingCost =
-    parameters.minibus.fuelCost + parameters.minibus.maintenanceCost + parameters.minibus.depreciationCost
-  const soloOperatingCost =
-    parameters.solo.fuelCost + parameters.solo.maintenanceCost + parameters.solo.depreciationCost
-  const articulatedOperatingCost =
-    parameters.articulated.fuelCost + parameters.articulated.maintenanceCost + parameters.articulated.depreciationCost
+  const smallBusOperatingCost = parameters.smallBusOperatingCost
+  const mediumBusOperatingCost = parameters.mediumBusOperatingCost
+  const largeBusOperatingCost = parameters.largeBusOperatingCost
 
   // Initialize variables to track the best solution
   let bestCost = Number.POSITIVE_INFINITY
-  let bestMinibus = 0
-  let bestSolo = 0
-  let bestArticulated = 0
+  let bestSmallBus = 0
+  let bestMediumBus = 0
+  let bestLargeBus = 0
   let bestCapacityUtilization = 0
 
   // Try different combinations of bus types
-  for (let m = 0; m <= minMinibuses; m++) {
-    for (let s = 0; s <= minSoloBuses; s++) {
-      for (let a = 0; a <= minArticulatedBuses; a++) {
+  for (let s = 0; s <= minSmallBuses; s++) {
+    for (let m = 0; m <= minMediumBuses; m++) {
+      for (let l = 0; l <= minLargeBuses; l++) {
         // Calculate total capacity
         const totalCapacity =
-          m * parameters.minibus.capacity + s * parameters.solo.capacity + a * parameters.articulated.capacity
+          s * parameters.smallBusCapacity + m * parameters.mediumBusCapacity + l * parameters.largeBusCapacity
 
         // Her iki yön için kapasite kontrolü yap
         if (totalCapacity < peakPassengersAtoB || totalCapacity < peakPassengersBtoA) continue
@@ -98,48 +95,48 @@ function optimizeRoute(route: RouteData, parameters: BusParameters): Optimizatio
 
         // Calculate total cost - her iki yöndeki hat uzunluklarını kullan
         const totalFuelCost =
-          m * parameters.minibus.fuelCost * routeLengthAtoB +
-          s * parameters.solo.fuelCost * routeLengthAtoB +
-          a * parameters.articulated.fuelCost * routeLengthAtoB +
-          m * parameters.minibus.fuelCost * routeLengthBtoA +
-          s * parameters.solo.fuelCost * routeLengthBtoA +
-          a * parameters.articulated.fuelCost * routeLengthBtoA
+          s * parameters.smallBusOperatingCost * routeLengthAtoB +
+          m * parameters.mediumBusOperatingCost * routeLengthAtoB +
+          l * parameters.largeBusOperatingCost * routeLengthAtoB +
+          s * parameters.smallBusOperatingCost * routeLengthBtoA +
+          m * parameters.mediumBusOperatingCost * routeLengthBtoA +
+          l * parameters.largeBusOperatingCost * routeLengthBtoA
 
         const totalMaintenanceCost =
-          m * parameters.minibus.maintenanceCost * routeLengthAtoB +
-          s * parameters.solo.maintenanceCost * routeLengthAtoB +
-          a * parameters.articulated.maintenanceCost * routeLengthAtoB +
-          m * parameters.minibus.maintenanceCost * routeLengthBtoA +
-          s * parameters.solo.maintenanceCost * routeLengthBtoA +
-          a * parameters.articulated.maintenanceCost * routeLengthBtoA
+          s * parameters.smallBusOperatingCost * routeLengthAtoB +
+          m * parameters.mediumBusOperatingCost * routeLengthAtoB +
+          l * parameters.largeBusOperatingCost * routeLengthAtoB +
+          s * parameters.smallBusOperatingCost * routeLengthBtoA +
+          m * parameters.mediumBusOperatingCost * routeLengthBtoA +
+          l * parameters.largeBusOperatingCost * routeLengthBtoA
 
         const totalDepreciationCost =
-          m * parameters.minibus.depreciationCost * routeLengthAtoB +
-          s * parameters.solo.depreciationCost * routeLengthAtoB +
-          a * parameters.articulated.depreciationCost * routeLengthAtoB +
-          m * parameters.minibus.depreciationCost * routeLengthBtoA +
-          s * parameters.solo.depreciationCost * routeLengthBtoA +
-          a * parameters.articulated.depreciationCost * routeLengthBtoA
+          s * parameters.smallBusOperatingCost * routeLengthAtoB +
+          m * parameters.mediumBusOperatingCost * routeLengthAtoB +
+          l * parameters.largeBusOperatingCost * routeLengthAtoB +
+          s * parameters.smallBusOperatingCost * routeLengthBtoA +
+          m * parameters.mediumBusOperatingCost * routeLengthBtoA +
+          l * parameters.largeBusOperatingCost * routeLengthBtoA
 
-        const totalDriverCost = (m + s + a) * parameters.driverCost * (routeLengthAtoB + routeLengthBtoA)
+        const totalDriverCost = (s + m + l) * parameters.operationalHours * (routeLengthAtoB + routeLengthBtoA)
 
         const totalCost = totalFuelCost + totalMaintenanceCost + totalDepreciationCost + totalDriverCost
 
         // Calculate carbon emission - her iki yöndeki hat uzunluklarını kullan
         const totalCarbonEmission =
-          m * parameters.minibus.carbonEmission * routeLengthAtoB +
-          s * parameters.solo.carbonEmission * routeLengthAtoB +
-          a * parameters.articulated.carbonEmission * routeLengthAtoB +
-          m * parameters.minibus.carbonEmission * routeLengthBtoA +
-          s * parameters.solo.carbonEmission * routeLengthBtoA +
-          a * parameters.articulated.carbonEmission * routeLengthBtoA
+          s * parameters.smallBusCO2Emission * routeLengthAtoB +
+          m * parameters.mediumBusCO2Emission * routeLengthAtoB +
+          l * parameters.largeBusCO2Emission * routeLengthAtoB +
+          s * parameters.smallBusCO2Emission * routeLengthBtoA +
+          m * parameters.mediumBusCO2Emission * routeLengthBtoA +
+          l * parameters.largeBusCO2Emission * routeLengthBtoA
 
         // Update best solution if this is better
         if (totalCost < bestCost) {
           bestCost = totalCost
-          bestMinibus = m
-          bestSolo = s
-          bestArticulated = a
+          bestSmallBus = s
+          bestMediumBus = m
+          bestLargeBus = l
           bestCapacityUtilization = capacityUtilization
         }
       }
@@ -148,36 +145,37 @@ function optimizeRoute(route: RouteData, parameters: BusParameters): Optimizatio
 
   // Calculate detailed costs for the best solution - her iki yöndeki hat uzunluklarını kullan
   const fuelCost =
-    bestMinibus * parameters.minibus.fuelCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestSolo * parameters.solo.fuelCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestArticulated * parameters.articulated.fuelCost * (routeLengthAtoB + routeLengthBtoA)
+    bestSmallBus * parameters.smallBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestMediumBus * parameters.mediumBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestLargeBus * parameters.largeBusOperatingCost * (routeLengthAtoB + routeLengthBtoA)
 
   const maintenanceCost =
-    bestMinibus * parameters.minibus.maintenanceCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestSolo * parameters.solo.maintenanceCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestArticulated * parameters.articulated.maintenanceCost * (routeLengthAtoB + routeLengthBtoA)
+    bestSmallBus * parameters.smallBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestMediumBus * parameters.mediumBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestLargeBus * parameters.largeBusOperatingCost * (routeLengthAtoB + routeLengthBtoA)
 
   const depreciationCost =
-    bestMinibus * parameters.minibus.depreciationCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestSolo * parameters.solo.depreciationCost * (routeLengthAtoB + routeLengthBtoA) +
-    bestArticulated * parameters.articulated.depreciationCost * (routeLengthAtoB + routeLengthBtoA)
+    bestSmallBus * parameters.smallBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestMediumBus * parameters.mediumBusOperatingCost * (routeLengthAtoB + routeLengthBtoA) +
+    bestLargeBus * parameters.largeBusOperatingCost * (routeLengthAtoB + routeLengthBtoA)
 
   const driverCost =
-    (bestMinibus + bestSolo + bestArticulated) * parameters.driverCost * (routeLengthAtoB + routeLengthBtoA)
+    (bestSmallBus + bestMediumBus + bestLargeBus) * parameters.operationalHours * (routeLengthAtoB + routeLengthBtoA)
 
   const carbonEmission =
-    bestMinibus * parameters.minibus.carbonEmission * (routeLengthAtoB + routeLengthBtoA) +
-    bestSolo * parameters.solo.carbonEmission * (routeLengthAtoB + routeLengthBtoA) +
-    bestArticulated * parameters.articulated.carbonEmission * (routeLengthAtoB + routeLengthBtoA)
+    bestSmallBus * parameters.smallBusCO2Emission * (routeLengthAtoB + routeLengthBtoA) +
+    bestMediumBus * parameters.mediumBusCO2Emission * (routeLengthAtoB + routeLengthBtoA) +
+    bestLargeBus * parameters.largeBusCO2Emission * (routeLengthAtoB + routeLengthBtoA)
 
   // Return the optimization result
   return {
     routeNo,
     routeName,
-    routeLength: avgRouteLength, // Ortalama hat uzunluğunu kullan
-    minibus: bestMinibus,
-    solo: bestSolo,
-    articulated: bestArticulated,
+    routeLengthAtoB,
+    routeLengthBtoA,
+    minibus: bestSmallBus,
+    solo: bestMediumBus,
+    articulated: bestLargeBus,
     fuelCost,
     maintenanceCost,
     depreciationCost,

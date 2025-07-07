@@ -123,6 +123,7 @@ class DataFlow {
 export function DataFlowAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -132,39 +133,41 @@ export function DataFlowAnimation() {
     if (!ctx) return
 
     let animationFrameId: number
-    let isDark = theme === "dark"
+    let dataFlow: DataFlow | null = null
 
     // Set canvas size
     const resizeCanvas = () => {
+      if (!canvas) return
       canvas.width = 300
       canvas.height = 200
+      initDataFlow()
+    }
+
+    function initDataFlow() {
+      if (!canvas) return
+      dataFlow = new DataFlow(canvas.width, canvas.height, isDark)
     }
 
     resizeCanvas()
 
-    const dataFlow = new DataFlow(canvas.width, canvas.height, isDark)
-
     // Animation loop
     function animate() {
-      ctx!.clearRect(0, 0, canvas.width, canvas.height)
+      if (!canvas || !ctx || !dataFlow) return
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       dataFlow.update()
-      dataFlow.draw(ctx!, isDark)
+      dataFlow.draw(ctx, isDark)
 
       animationFrameId = requestAnimationFrame(animate)
     }
 
     animate()
 
-    // Update colors when theme changes
-    if (theme) {
-      isDark = theme === "dark"
-    }
-
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [theme])
+  }, [isDark])
 
   return <canvas ref={canvasRef} className="w-[300px] h-[200px]" />
 }

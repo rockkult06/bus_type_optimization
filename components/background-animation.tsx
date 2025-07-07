@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import { useTheme } from "next-themes"
 
 // Particle class
@@ -66,6 +66,7 @@ class Particle {
 export function BackgroundAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -78,7 +79,6 @@ export function BackgroundAnimation() {
     let particles: Particle[] = []
     let mouseX = 0
     let mouseY = 0
-    let isDark = theme === "dark"
 
     // Set canvas size
     const resizeCanvas = () => {
@@ -100,6 +100,7 @@ export function BackgroundAnimation() {
 
     // Initialize particles
     function initParticles() {
+      if (!canvas) return
       particles = []
       const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 10000), 150)
 
@@ -132,12 +133,13 @@ export function BackgroundAnimation() {
 
     // Animation loop
     function animate() {
-      ctx!.clearRect(0, 0, canvas.width, canvas.height)
+      if (!canvas || !ctx) return
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Update and draw particles
       particles.forEach((particle) => {
         particle.update(mouseX, mouseY, canvas.width, canvas.height)
-        particle.draw(ctx!)
+        particle.draw(ctx)
       })
 
       drawConnections()
@@ -147,22 +149,13 @@ export function BackgroundAnimation() {
 
     animate()
 
-    // Update colors when theme changes
-    if (theme) {
-      isDark = theme === "dark"
-      particles.forEach((particle) => {
-        particle.color = isDark
-          ? `rgba(${100 + Math.random() * 155}, ${100 + Math.random() * 155}, ${200 + Math.random() * 55}, ${0.1 + Math.random() * 0.2})`
-          : `rgba(${100 + Math.random() * 155}, ${100 + Math.random() * 155}, ${200 + Math.random() * 55}, ${0.05 + Math.random() * 0.1})`
-      })
-    }
-
+    // Cleanup
     return () => {
       window.removeEventListener("resize", resizeCanvas)
       window.removeEventListener("mousemove", handleMouseMove)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [theme])
+  }, [isDark])
 
   return <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 }
