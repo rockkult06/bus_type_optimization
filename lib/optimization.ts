@@ -1,12 +1,34 @@
-import type { RouteData, BusParameters, OptimizationResult, KPIData } from "@/types"
+import type { RouteData, BusParameters, OptimizationResult, KPIData, DailyOptimizationResult, HourlyOptimization } from "@/types"
+
+// Convert OptimizationResult to DailyOptimizationResult
+function convertToDailyResult(result: OptimizationResult): DailyOptimizationResult {
+  // Create hourly optimizations based on the optimization result
+  const hourlyOptimizations: HourlyOptimization[] = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    selectedBusType: result.minibus > 0 ? "small" : result.solo > 0 ? "medium" : "large",
+    requiredBuses: result.minibus + result.solo + result.articulated,
+    totalCost: result.totalCost / 24, // Distribute daily cost evenly
+    co2Emission: result.carbonEmission / 24, // Distribute daily emission evenly
+    capacityUtilization: result.capacityUtilization
+  }))
+
+  return {
+    routeNo: result.routeNo,
+    routeName: result.routeName,
+    hourlyOptimizations,
+    totalDailyCost: result.totalCost,
+    totalDailyCO2: result.carbonEmission,
+    averageCapacityUtilization: result.capacityUtilization
+  }
+}
 
 // Main optimization function
 export function runOptimization(
   routes: RouteData[],
   parameters: BusParameters,
-): { results: OptimizationResult[]; kpis: KPIData; isFeasible: boolean } {
+): { results: DailyOptimizationResult[]; kpis: KPIData; isFeasible: boolean } {
   // Initialize results array
-  const results: OptimizationResult[] = []
+  const optimizationResults: OptimizationResult[] = []
   let isFeasible = true
 
   // Track total fleet usage
@@ -23,8 +45,11 @@ export function runOptimization(
     totalMediumBusUsed += result.solo
     totalLargeBusUsed += result.articulated
 
-    results.push(result)
+    optimizationResults.push(result)
   }
+
+  // Convert OptimizationResults to DailyOptimizationResults
+  const results = optimizationResults.map(convertToDailyResult)
 
   // Check if we have enough buses in the fleet
   if (
@@ -36,7 +61,7 @@ export function runOptimization(
   }
 
   // Calculate KPIs
-  const kpis = calculateKPIs(results, routes, parameters)
+  const kpis = calculateKPIs(optimizationResults, routes, parameters)
 
   return { results, kpis, isFeasible }
 }
