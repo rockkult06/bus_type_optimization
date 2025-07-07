@@ -1,5 +1,5 @@
 // RouteData tipini güncelle
-export type RouteData = {
+export interface RouteData extends Omit<DailyRouteData, 'hourlyDemands'> {
   routeNo: string
   routeName: string
   routeLengthAtoB: number
@@ -11,33 +11,17 @@ export type RouteData = {
 }
 
 // BusParameters tipini güncelleyelim
-export type BusParameters = {
-  minibus: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number
-    maintenanceCost: number
-    depreciationCost: number
-    carbonEmission: number
-  }
-  solo: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number
-    maintenanceCost: number
-    depreciationCost: number
-    carbonEmission: number
-  }
-  articulated: {
-    capacity: number
-    fuelCost: number
-    fleetCount: number
-    maintenanceCost: number
-    depreciationCost: number
-    carbonEmission: number
-  }
-  driverCost: number
-  maxInterlining: number // Maximum number of routes a bus can serve
+export interface BusParameters {
+  smallBusCapacity: number;
+  smallBusOperatingCost: number;
+  smallBusCO2Emission: number;
+  mediumBusCapacity: number;
+  mediumBusOperatingCost: number;
+  mediumBusCO2Emission: number;
+  largeBusCapacity: number;
+  largeBusOperatingCost: number;
+  largeBusCO2Emission: number;
+  operationalHours: number;
 }
 
 // ScheduleResult tipini güncelle
@@ -101,4 +85,42 @@ export type ScheduleParameters = {
     start: string
     end: string
   }
+}
+
+// Saatlik talep verisi
+export interface HourlyDemand {
+  hour: number;
+  passengersAtoB: number;
+  passengersBtoA: number;
+  travelTimeAtoB: number;
+  travelTimeBtoA: number;
+}
+
+// Günlük rota verisi
+export interface DailyRouteData {
+  routeNo: string;
+  routeName: string;
+  distanceAtoB: number;
+  distanceBtoA: number;
+  hourlyDemands: HourlyDemand[];
+}
+
+// Saatlik optimizasyon sonucu
+export interface HourlyOptimization {
+  hour: number;
+  selectedBusType: "small" | "medium" | "large";
+  requiredBuses: number;
+  totalCost: number;
+  co2Emission: number;
+  capacityUtilization: number;
+}
+
+// Günlük optimizasyon sonucu
+export interface DailyOptimizationResult {
+  routeNo: string;
+  routeName: string;
+  hourlyOptimizations: HourlyOptimization[];
+  totalDailyCost: number;
+  totalDailyCO2: number;
+  averageCapacityUtilization: number;
 }

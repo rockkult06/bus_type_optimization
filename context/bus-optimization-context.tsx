@@ -1,6 +1,17 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import React, { createContext, useContext, useState, type ReactNode } from "react"
+import { 
+  RouteData, 
+  BusParameters, 
+  OptimizationResult, 
+  ScheduleParameters,
+  ScheduleResult,
+  KPIData,
+  DailyRouteData,
+  HourlyDemand,
+  DailyOptimizationResult
+} from '../types';
 
 // RouteData tipini güncelle - her iki yön için ayrı uzunluk ve parkur süresi ekle
 export type RouteData = {
@@ -127,19 +138,21 @@ export type KPIData = {
   carbonSaved: number // Carbon emission saved by using public transport
 }
 
-type BusOptimizationContextType = {
+interface BusOptimizationContextType {
   routes: RouteData[]
-  setRoutes: (routes: RouteData[]) => void
-  parameters: BusParameters
-  setParameters: (parameters: BusParameters) => void
-  results: OptimizationResult[]
-  setResults: (results: OptimizationResult[]) => void
+  dailyRoutes: DailyRouteData[]
+  busParameters: BusParameters
+  optimizationResults: OptimizationResult[]
   scheduleParameters: ScheduleParameters
-  setScheduleParameters: (scheduleParameters: ScheduleParameters) => void
   scheduleResults: ScheduleResult | null
-  setScheduleResults: (scheduleResults: ScheduleResult) => void
   kpis: KPIData | null
-  setKpis: (kpis: KPIData) => void
+  setRoutes: (routes: RouteData[]) => void
+  setDailyRoutes: (routes: DailyRouteData[]) => void
+  setBusParameters: (params: BusParameters) => void
+  setOptimizationResults: (results: OptimizationResult[]) => void
+  setScheduleParameters: (params: ScheduleParameters) => void
+  setScheduleResults: (results: ScheduleResult | null) => void
+  setKpis: (kpis: KPIData | null) => void
   isOptimizing: boolean
   setIsOptimizing: (isOptimizing: boolean) => void
   activeStep: string
@@ -149,37 +162,37 @@ type BusOptimizationContextType = {
 // Varsayılan parametrelere maxInterlining ekleyelim
 const defaultParameters: BusParameters = {
   minibus: {
-    capacity: 60,
-    fuelCost: 16,
-    fleetCount: 600,
-    maintenanceCost: 2,
-    depreciationCost: 3,
+    capacity: 25,
+    fuelCost: 0.8,
+    fleetCount: 10,
+    maintenanceCost: 0.3,
+    depreciationCost: 0.5,
     carbonEmission: 0.7,
   },
   solo: {
-    capacity: 100,
-    fuelCost: 20,
-    fleetCount: 1400,
-    maintenanceCost: 3,
-    depreciationCost: 4,
-    carbonEmission: 1.1,
+    capacity: 90,
+    fuelCost: 1.0,
+    fleetCount: 20,
+    maintenanceCost: 0.4,
+    depreciationCost: 0.6,
+    carbonEmission: 1.0,
   },
   articulated: {
-    capacity: 120,
-    fuelCost: 28,
-    fleetCount: 400,
-    maintenanceCost: 4,
-    depreciationCost: 6,
+    capacity: 150,
+    fuelCost: 1.3,
+    fleetCount: 15,
+    maintenanceCost: 0.5,
+    depreciationCost: 0.8,
     carbonEmission: 1.4,
   },
-  driverCost: 38,
-  maxInterlining: 0, // Varsayılan olarak her otobüs sadece bir hatta çalışabilir (interlining yok)
+  driverCost: 50,
+  maxInterlining: 2,
 }
 
 const defaultScheduleParameters: ScheduleParameters = {
   timeRange: {
-    start: "07:00",
-    end: "08:00",
+    start: "06:00",
+    end: "23:00",
   },
 }
 
@@ -187,8 +200,9 @@ const BusOptimizationContext = createContext<BusOptimizationContextType | undefi
 
 export function BusOptimizationProvider({ children }: { children: ReactNode }) {
   const [routes, setRoutes] = useState<RouteData[]>([])
-  const [parameters, setParameters] = useState<BusParameters>(defaultParameters)
-  const [results, setResults] = useState<OptimizationResult[]>([])
+  const [dailyRoutes, setDailyRoutes] = useState<DailyRouteData[]>([])
+  const [busParameters, setBusParameters] = useState<BusParameters>(defaultParameters)
+  const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([])
   const [scheduleParameters, setScheduleParameters] = useState<ScheduleParameters>(defaultScheduleParameters)
   const [scheduleResults, setScheduleResults] = useState<ScheduleResult | null>(null)
   const [kpis, setKpis] = useState<KPIData | null>(null)
@@ -199,16 +213,18 @@ export function BusOptimizationProvider({ children }: { children: ReactNode }) {
     <BusOptimizationContext.Provider
       value={{
         routes,
-        setRoutes,
-        parameters,
-        setParameters,
-        results,
-        setResults,
+        dailyRoutes,
+        busParameters,
+        optimizationResults,
         scheduleParameters,
-        setScheduleParameters,
         scheduleResults,
-        setScheduleResults,
         kpis,
+        setRoutes,
+        setDailyRoutes,
+        setBusParameters,
+        setOptimizationResults,
+        setScheduleParameters,
+        setScheduleResults,
         setKpis,
         isOptimizing,
         setIsOptimizing,
