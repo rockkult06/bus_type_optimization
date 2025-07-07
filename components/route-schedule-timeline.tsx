@@ -162,17 +162,17 @@ const RouteScheduleTimeline: React.FC<RouteScheduleTimelineProps> = ({ scheduleR
 
     // Otobüs tiplerine göre sabit renkler
     const typeColors = {
-      minibus: "#2dd4bf", // teal-400 - Midibüs için turkuaz
-      solo: "#60a5fa", // blue-400 - Solo için mavi
-      articulated: "#f472b6", // pink-400 - Körüklü için pembe
+      small: "#2dd4bf", // Küçük otobüs için turkuaz
+      medium: "#60a5fa", // Orta otobüs için mavi
+      large: "#f472b6", // Büyük otobüs için pembe
     }
 
     // Tüm seferleri dolaş ve otobüs tipine göre renk ata
     if (scheduleResults?.scheduleAB) {
       scheduleResults.scheduleAB.forEach((trip: any) => {
         if (trip.busId) {
-          const busType = trip.busType || "solo" // Varsayılan olarak solo
-          colors[trip.busId] = typeColors[busType === "körüklü" ? "articulated" : busType]
+          const busType = (trip.busType as "small" | "medium" | "large") || "medium"
+          colors[trip.busId] = typeColors[busType] || "#a3a3a3"
         }
       })
     }
@@ -180,8 +180,8 @@ const RouteScheduleTimeline: React.FC<RouteScheduleTimelineProps> = ({ scheduleR
     if (scheduleResults?.scheduleBA) {
       scheduleResults.scheduleBA.forEach((trip: any) => {
         if (trip.busId) {
-          const busType = trip.busType || "solo" // Varsayılan olarak solo
-          colors[trip.busId] = typeColors[busType === "körüklü" ? "articulated" : busType]
+          const busType = (trip.busType as "small" | "medium" | "large") || "medium"
+          colors[trip.busId] = typeColors[busType] || "#a3a3a3"
         }
       })
     }
@@ -322,19 +322,19 @@ const RouteScheduleTimeline: React.FC<RouteScheduleTimelineProps> = ({ scheduleR
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#134e4a]"
           style={{ backgroundColor: "#2dd4bf" }}
         >
-          <span className="font-medium">Midibüs</span>
+          <span className="font-medium">Küçük Otobüs</span>
         </div>
         <div
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#1e3a8a]"
           style={{ backgroundColor: "#60a5fa" }}
         >
-          <span className="font-medium">Solo</span>
+          <span className="font-medium">Orta Otobüs</span>
         </div>
         <div
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#831843]"
           style={{ backgroundColor: "#f472b6" }}
         >
-          <span className="font-medium">Körüklü</span>
+          <span className="font-medium">Büyük Otobüs</span>
         </div>
       </div>
     )
@@ -539,7 +539,7 @@ const RouteScheduleTimeline: React.FC<RouteScheduleTimelineProps> = ({ scheduleR
                       <TimelineBlock
                         key={`${routeNo}-${direction}-${index}`}
                         busId={trip.busId}
-                        busType={trip.busType || "solo"}
+                        busType={trip.busType || "medium"}
                         startTime={trip.time}
                         endTime={trip.endTime}
                         color={busColors[trip.busId]} // Use busColors instead of routeColors
@@ -569,19 +569,19 @@ const RouteScheduleTimeline: React.FC<RouteScheduleTimelineProps> = ({ scheduleR
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#134e4a]"
           style={{ backgroundColor: "#2dd4bf" }}
         >
-          <span className="font-medium">Midibüs</span>
+          <span className="font-medium">Küçük Otobüs</span>
         </div>
         <div
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#1e3a8a]"
           style={{ backgroundColor: "#60a5fa" }}
         >
-          <span className="font-medium">Solo</span>
+          <span className="font-medium">Orta Otobüs</span>
         </div>
         <div
           className="flex items-center rounded-md px-3 py-1.5 text-xs text-white shadow-sm border-2 border-[#831843]"
           style={{ backgroundColor: "#f472b6" }}
         >
-          <span className="font-medium">Körüklü</span>
+          <span className="font-medium">Büyük Otobüs</span>
         </div>
       </div>
     </div>
