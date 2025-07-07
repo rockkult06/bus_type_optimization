@@ -19,23 +19,24 @@ export function Header() {
   const resetAllData = () => {
     if (busOptimization) {
       busOptimization.setRoutes([])
-      busOptimization.setParameters({
-        busTypes: [],
-        maxBuses: 100,
-        maxCost: 1000000,
-        maxInterlining: 1,
+      busOptimization.setBusParameters({
+        smallBusCapacity: 25,
+        smallBusOperatingCost: 0.8,
+        smallBusCO2Emission: 0.7,
+        mediumBusCapacity: 90,
+        mediumBusOperatingCost: 1.0,
+        mediumBusCO2Emission: 1.0,
+        largeBusCapacity: 150,
+        largeBusOperatingCost: 1.3,
+        largeBusCO2Emission: 1.4,
+        operationalHours: 18,
       })
-      busOptimization.setResults([])
+      busOptimization.setOptimizationResults([])
       busOptimization.setScheduleParameters({
-        headwayMin: 5,
-        headwayMax: 30,
-        servicePeriodStart: "06:00",
-        servicePeriodEnd: "23:00",
-        peakHoursStart: "07:00",
-        peakHoursEnd: "09:00",
-        peakHoursStartEvening: "17:00",
-        peakHoursEndEvening: "19:00",
-        minLayoverTime: 5,
+        timeRange: {
+          start: "06:00",
+          end: "23:00",
+        }
       })
       busOptimization.setScheduleResults(null)
       busOptimization.setKpis(null)
