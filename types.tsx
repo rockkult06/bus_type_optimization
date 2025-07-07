@@ -1,13 +1,13 @@
 // RouteData tipini güncelle
-export interface RouteData extends Omit<DailyRouteData, 'hourlyDemands'> {
+export interface RouteData {
   routeNo: string
   routeName: string
-  routeLengthAtoB: number
-  routeLengthBtoA: number
-  travelTimeAtoB: number
-  travelTimeBtoA: number
-  peakPassengersAtoB: number
-  peakPassengersBtoA: number
+  routeLengthAtoB: number // A'dan B'ye hat uzunluğu
+  routeLengthBtoA: number // B'den A'ya hat uzunluğu
+  travelTimeAtoB: number // A'dan B'ye parkur süresi (dakika)
+  travelTimeBtoA: number // B'den A'ya parkur süresi (dakika)
+  peakPassengersAtoB: number // A'dan B'ye yolcu sayısı
+  peakPassengersBtoA: number // B'den A'ya yolcu sayısı
 }
 
 // BusParameters tipini güncelleyelim
@@ -39,8 +39,17 @@ export type ScheduleResult = {
     {
       scheduleAB: Array<{ time: string; busId: string; busType?: string }>
       scheduleBA: Array<{ time: string; busId: string; busType?: string }>
+      routeInfo?: {
+        routeLengthAtoB: number
+        routeLengthBtoA: number
+        travelTimeAtoB: number
+        travelTimeBtoA: number
+        peakPassengersAtoB: number
+        peakPassengersBtoA: number
+      }
     }
   >
+  optimalInterlining?: number // Optimal interlining değerini ekledik
 }
 
 export type KPIData = {
@@ -123,4 +132,26 @@ export interface DailyOptimizationResult {
   totalDailyCost: number;
   totalDailyCO2: number;
   averageCapacityUtilization: number;
+}
+
+// Context tipi
+export interface BusOptimizationContextType {
+  routes: RouteData[]
+  dailyRoutes: DailyRouteData[]
+  busParameters: BusParameters
+  optimizationResults: DailyOptimizationResult[]
+  scheduleParameters: ScheduleParameters
+  scheduleResults: ScheduleResult | null
+  kpis: KPIData | null
+  setRoutes: (routes: RouteData[]) => void
+  setDailyRoutes: (routes: DailyRouteData[]) => void
+  setBusParameters: (params: BusParameters) => void
+  setOptimizationResults: (results: DailyOptimizationResult[]) => void
+  setScheduleParameters: (params: ScheduleParameters) => void
+  setScheduleResults: (results: ScheduleResult | null) => void
+  setKpis: (kpis: KPIData | null) => void
+  isOptimizing: boolean
+  setIsOptimizing: (isOptimizing: boolean) => void
+  activeStep: string
+  setActiveStep: (step: string) => void
 }
